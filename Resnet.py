@@ -8,29 +8,8 @@ import torch.nn as nn
 import torch.optim as optim
 import matplotlib.pyplot as plt
 import torch.nn.functional as F
-from torch import Tensor
-import functools
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
-import torchvision
-import torch.utils.model_zoo as model_zoo
-
-__all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101',
-           'resnet152', 'resnext50_32x4d', 'resnext101_32x8d',
-           'wide_resnet50_2', 'wide_resnet101_2']
-
-
-model_urls = {
-    'resnet18': 'https://download.pytorch.org/models/resnet18-5c106cde.pth',
-    'resnet34': 'https://download.pytorch.org/models/resnet34-333f7ec4.pth',
-    'resnet50': 'https://download.pytorch.org/models/resnet50-19c8e357.pth',
-    'resnet101': 'https://download.pytorch.org/models/resnet101-5d3b4d8f.pth',
-    'resnet152': 'https://download.pytorch.org/models/resnet152-b121ed2d.pth',
-    'resnext50_32x4d': 'https://download.pytorch.org/models/resnext50_32x4d-7cdf4587.pth',
-    'resnext101_32x8d': 'https://download.pytorch.org/models/resnext101_32x8d-8ba56ff5.pth',
-    'wide_resnet50_2': 'https://download.pytorch.org/models/wide_resnet50_2-95faca4d.pth',
-    'wide_resnet101_2': 'https://download.pytorch.org/models/wide_resnet101_2-32ee1156.pth',
-}
 
 
 ########## for reproducing the same results ##########
@@ -115,7 +94,7 @@ def adjust_learning_rate(base_lr, optimizer, epoch, decay_step=None, epoch_list=
     Set base_lr as initial LR and divided by 10 per $decay_step epochs     
     '''
     assert decay_step is None or epoch_list is None, "decay_step and epoch_list can only set one of them"
-
+    base_lr=0.1
     if epoch_list is not None:
         index = 0
         for i, e in enumerate(epoch_list, 1):
@@ -123,22 +102,22 @@ def adjust_learning_rate(base_lr, optimizer, epoch, decay_step=None, epoch_list=
                 index = i
             else:
                 break
-        lr = base_lr * (0.1 ** index )
+        lr = base_lr*(0.1**index)
         
     elif decay_step is not None:
-        lr = base_lr * (0.1 ** (epoch // decay_step))
+        lr = base_lr*(0.1**(epoch // decay_step))
 
     else:
         # default decay_step to 30 
-        lr = base_lr * (0.1 ** (epoch // 30))
+        lr = base_lr*(0.1**(epoch // 30))
     
     # way to change lr in model
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
-
+    
+    print('lr:', lr)
+    
     return lr
-
-
 
 ######################## Build Model ########################
 def conv3x3(in_planes, out_planes, stride=1, groups=1, dilation=1):
@@ -249,12 +228,11 @@ class ResNet(nn.Module):
 def resnet34():
     return ResNet()
 
-
-net = resnet50().to(device)
+net = resnet34().to(device)
 
 # Define Loss and optimizer
 learning_rate = 0.1
-optimizer = optim.SGD(net.parameters(), lr=learning_rate, momentum=0.9, weight_decay=5e-4)
+optimizer = optim.SGD(net.parameters(), lr=learning_rate, momentum=0.9, weight_decay=1e-4)
 
 # Train the model
 num_epochs = 150
@@ -262,12 +240,12 @@ num_epochs = 150
 StartTime = time.time()
 loss, val_acc, lr_curve = [], [], []
 for epoch in range(num_epochs):
-    lr = adjust_learning_rate(learning_rate, optimizer, epoch, epoch_list=[80, 110, 130])
+    learning_rate = adjust_learning_rate(learning_rate, optimizer, epoch, epoch_list=[80, 110, 130])
     train_loss = train(net, train_loader, optimizer, epoch, verbose=True)
     valid_acc  = test(net, test_loader)
     loss.append(train_loss)
     val_acc.append(valid_acc)
-    lr_curve.append(lr)
+    lr_curve.append(learning_rate)
 
 
 EndTime = time.time()
