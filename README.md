@@ -1,9 +1,12 @@
 # ResNet-Implementation
 ## ResNet
 一般 CNN 中，當層數增多時，介於0~1之間的回傳梯度使乘積愈來愈小，甚至趨於零，梯度值近乎消失，導致權重(weight)無法有效更新，訓練速度緩慢。
+### Resnet殘差網路：在網路中加入Short cut的設計
+<img src="https://github.com/jason971019/ResNet-Implementation/blob/master/shortcut.png" width="500" height="350">  
+從上圖可發現，F(x)+x多了”x”使在backpropagation做chain rule時至少微分後仍保有一個1存在，解決梯度消失的問題。
 ## Data：Cifar-10
 取用 Cifar-10 資料對飛機、汽車、船、貓、狗等10個種類進行 traing 並做出預測。
-<img src="https://github.com/jason971019/ResNet-Implementation/blob/master/cifar-10.jpg" width="500" height="350" alt="取用 Cifar-10 資料對飛機、汽車、船、貓、狗等10個種類進行 traing 並做出預測。"/>
+<img src="https://github.com/jason971019/ResNet-Implementation/blob/master/cifar-10.jpg" width="500" height="350">
 ## Code
 ### Adjust Learning Rate
 在指定的 epochs 更新 learning rate 有效增加 training 速度
