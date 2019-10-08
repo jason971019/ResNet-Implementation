@@ -89,11 +89,8 @@ def test(model, data_loader):
             100. * correct / len(data_loader.dataset)))   
     return float(correct) / len(data_loader.dataset)
 
-def adjust_learning_rate(base_lr, optimizer, epoch, decay_step=None, epoch_list=None):
-    '''
-    Set base_lr as initial LR and divided by 10 per $decay_step epochs     
-    '''
-    assert decay_step is None or epoch_list is None, "decay_step and epoch_list can only set one of them"
+def adjust_learning_rate(base_lr, optimizer, epoch, epoch_list=None):
+    # Set base_lr as initial LR and adjust learning rate by *0.1 at assigned epochs
     base_lr=0.1
     if epoch_list is not None:
         index = 0
@@ -103,14 +100,7 @@ def adjust_learning_rate(base_lr, optimizer, epoch, decay_step=None, epoch_list=
             else:
                 break
         lr = base_lr*(0.1**index)
-        
-    elif decay_step is not None:
-        lr = base_lr*(0.1**(epoch // decay_step))
 
-    else:
-        # default decay_step to 30 
-        lr = base_lr*(0.1**(epoch // 30))
-    
     # way to change lr in model
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
