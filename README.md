@@ -1,6 +1,33 @@
 # ResNet-Implementation
+## ResNet
+一般 CNN 中，當層數增多時，介於0~1之間的回傳梯度使乘積愈來愈小，甚至趨於零，梯度值近乎消失，導致權重(weight)無法有效更新，訓練速度緩慢。
+## Data：Cifar-10
+取用 Cifar-10 資料對飛機、汽車、船、貓、狗等10個種類進行 traing 並做出預測。
+<img src="https://github.com/jason971019/ResNet-Implementation/blob/master/cifar-10.jpg" width="500" height="350" alt="取用 Cifar-10 資料對飛機、汽車、船、貓、狗等10個種類進行 traing 並做出預測。"/>
+## Code
+### Adjust Learning Rate
+在指定的 epochs 更新 learning rate 有效增加 training 速度
 ```python
-######################## Build Model ########################
+def adjust_learning_rate(base_lr, optimizer, epoch, epoch_list=None):
+    # Set base_lr as initial LR and adjust learning rate by *0.1 at assigned epochs
+    base_lr=0.1
+    if epoch_list is not None:
+        index = 0
+        for i, e in enumerate(epoch_list, 1):
+            if epoch >= e:
+                index = i
+            else:
+                break
+        lr = base_lr*(0.1**index)
+
+    # way to change lr in model
+    for param_group in optimizer.param_groups:
+        param_group['lr'] = lr
+    
+    return lr
+```
+### Build Model
+```python
 def conv3x3(in_planes, out_planes, stride=1, groups=1, dilation=1):
     return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride, padding=dilation, groups=groups, bias=False, dilation=dilation)
 
@@ -70,6 +97,7 @@ class ResNet(nn.Module):
         self.layer4 = self._make_layer(256, 512, 3, stride=2) 
         self.fc = nn.Linear(512, num_classes)
         
+        
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
@@ -107,4 +135,38 @@ class ResNet(nn.Module):
 
 def resnet34():
     return ResNet()
+```    
+### Training
+```python
+net = resnet34().to(device)
+
+# Define Loss and optimizer
+learning_rate = 0.1
+optimizer = optim.SGD(net.parameters(), lr=learning_rate, momentum=0.9, weight_decay=1e-4)
+
+# Train the model
+num_epochs = 150
+
+StartTime = time.time()
+loss, val_acc, lr_curve = [], [], []
+for epoch in range(num_epochs):
+    learning_rate = adjust_learning_rate(learning_rate, optimizer, epoch, epoch_list=[80, 110, 130])
+    train_loss = train(net, train_loader, optimizer, epoch, verbose=True)
+    valid_acc  = test(net, test_loader)
+    loss.append(train_loss)
+    val_acc.append(valid_acc)
+    lr_curve.append(learning_rate)
+
+
+EndTime = time.time()
 ```
+## Result
+### Learning Rate
+![image](https://github.com/jason971019/ResNet-Implementation/blob/master/learning%20rate.png)  
+分別在epochs 80、110、130做learning rate的更新，可發現：  
+epoch = 80 的更新後 accuracy 有顯著提升  
+epoch = 110 的更新後 accuracy 些許上升  
+epoch = 130 的更新後 accuracy 幾乎趨緩  
+### Accuracy
+![image](https://github.com/jason971019/ResNet-Implementation/blob/master/accuracy.png)  
+大約在 110 個 epochs 後 Accuracy 逐漸趨緩，可得知相較於一般 CNN，Resnet 可大幅減少訓練次數，節省訓練時間。
